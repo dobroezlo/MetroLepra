@@ -6,8 +6,8 @@ using System.Resources;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MetroLepra.Core")]
-[assembly: AssemblyDescription("Core")]
+[assembly: AssemblyTitle("MetroLepra.Model")]
+[assembly: AssemblyDescription("Model")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("MefLab")]
 [assembly: AssemblyProduct("Metro Lepra")]
@@ -21,7 +21,7 @@ using System.Resources;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("9d489eff-80ee-4f1b-914f-c5f45f58cc85")]
+[assembly: Guid("25ae8f25-279f-44e1-8d7d-03738304c5de")]
 
 // Version information for an assembly consists of the following four values:
 //
