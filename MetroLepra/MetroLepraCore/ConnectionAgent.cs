@@ -1,18 +1,25 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using MetroLepra.Model;
+using Newtonsoft.Json.Linq;
 
 namespace MetroLepra.Core
 {
     public class ConnectionAgent
     {
-        private const string AuthCookiesRegex = "lepro.sid=(.+?);.+?lepro.uid=(.+?);";
+        private const string AuthCookiesRegex = "lepro.sid=(.+?); domain=.leprosorium.ru; path=/,  lepro.uid=(.+?); domain=.leprosorium.ru; path=/,";
         private HttpClient _client;
         private static ConnectionAgent _instance;
+
+        private Cookie _sessionIdCookie;
+        private Cookie _userIdCookie;
+        private bool _isAuthenticated;
 
         /// <summary>
         ///     Prevents a default instance of the <see cref="ConnectionAgent" /> class from being created.
@@ -30,26 +37,71 @@ namespace MetroLepra.Core
             get { return _instance ?? (_instance = new ConnectionAgent()); }
         }
 
-        public async Task<String> GetMainPage()
+        /// <summary>
+        /// Is user logged in
+        /// </summary>
+        public bool IsAuthenticated
         {
-            var response = await _client.GetAsync("http://leprosorium.ru/");
+            get { return _isAuthenticated; }
+        }
+
+        public async Task<LoginPageModel> GetLoginPage()
+        {
+            var response = await _client.GetAsync("http://leprosorium.ru/login/");
             if (!response.IsSuccessStatusCode)
                 return null;
 
             var loginPageHtmlData = await response.Content.ReadAsStringAsync();
-            return loginPageHtmlData;
+            return HtmlParser.ParseLoginPage(loginPageHtmlData);
         }
 
-        public async Task<String> GetMainPage(string sessionId, string userId)
+        public async Task<MainPageModel> GetMainPage()
         {
-            var cookieContainer = new CookieContainer();
-            cookieContainer.Add(new Uri("http://leprosorium.ru/"), new Cookie("lepro.sid", sessionId));
-            cookieContainer.Add(new Uri("http://leprosorium.ru/"), new Cookie("lepro.uid", userId));
+            var response = await PerformAuthenticatedGetRequest("http://leprosorium.ru/");
+            var responseContent = await response.Content.ReadAsStringAsync();
+            return HtmlParser.ParseMainPage(responseContent);
+        }
 
-            var handler = new HttpClientHandler {CookieContainer = cookieContainer};
-            _client = new HttpClient(handler);
+        public async Task<LeproPanelModel> GetLeproPanel()
+        {
+            var response = await PerformAuthenticatedGetRequest("http://leprosorium.ru/api/lepropanel");
+            var responseContent = await response.Content.ReadAsStringAsync();
 
-            return await GetMainPage();
+            var leproPanelModel = JsonParser.ParseLeproPanel(responseContent);
+            return leproPanelModel;
+        }
+
+        public async Task<List<SubLepraModel>> GetUnderground(int? page = null)
+        {
+            var response = await PerformAuthenticatedGetRequest("http://leprosorium.ru/underground/subscribers/" + page.GetValueOrDefault(1));
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            var underground = HtmlParser.ParseUnderground(responseContent);
+            return underground;
+        }
+
+        public async Task<DemocracyPageModel> GetDemocracyPage()
+        {
+            var response = await PerformAuthenticatedGetRequest("http://leprosorium.ru/democracy/");
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            var model = HtmlParser.ParseDemocracyPage(responseContent);
+            return model;
+        }
+
+        public async Task<List<PostModel>> GetLatestPosts(int? page)
+        {
+            var message = new HttpRequestMessage(HttpMethod.Post, new Uri("http://leprosorium.ru/idxctl/"));
+            message.Content = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>
+                                                            {
+                                                                new KeyValuePair<string, string>("from", page.GetValueOrDefault(0).ToString())
+                                                            });
+
+            var response = await PerformAuthenticatedPostRequest(message);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var posts = JsonParser.ParsePosts(responseContent);
+
+            return posts;
         }
 
         public async Task<Stream> GetImageStream(String path)
@@ -69,48 +121,94 @@ namespace MetroLepra.Core
         /// <param name="password"></param>
         /// <param name="captcha"></param>
         /// <param name="loginCode"></param>
-        /// <returns>Tuple structure with login information. Item1 = sessionId, Item2 = userId, Item3 = login response content (populated when login failed)</returns>
-        public async Task<Tuple<String, String, String>> Login(String username, String password, String captcha, String loginCode)
+        /// <returns>Error if login is unsuccessful</returns>
+        public async Task<String> Login(String username, String password, String captcha, String loginCode)
         {
             var postString = String.Format("user={0}&pass={1}&captcha={2}&logincode={3}&save=1", username, password, captcha, loginCode);
             var byteArray = Encoding.UTF8.GetBytes(postString);
 
             var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://leprosorium.ru/login/");
             httpWebRequest.AllowAutoRedirect = false;
+            httpWebRequest.AllowReadStreamBuffering = true;
             httpWebRequest.Method = HttpMethod.Post.Method;
             httpWebRequest.ContentType = "application/x-www-form-urlencoded";
             httpWebRequest.ContentLength = byteArray.Length;
 
             var requestStream = await httpWebRequest.GetRequestStreamAsync();
             requestStream.Write(byteArray, 0, byteArray.Length);
+            requestStream.Close();
 
             var response = await httpWebRequest.GetResponseAsync();
             var setCookie = response.Headers["Set-Cookie"];
 
-            var authCookies = ExtractAuthCookies(setCookie);
-            if (authCookies == null)
+            var success = SetAuthCookies(setCookie);
+            if (!success)
             {
                 using (var responseContentStream = response.GetResponseStream())
                 {
                     var reader = new StreamReader(responseContentStream);
                     var responseContent = await reader.ReadToEndAsync();
-                    return new Tuple<string, string, string>(null, null, responseContent);
+                    return HtmlParser.ExtractLoginError(responseContent);
                 }
             }
 
-            return new Tuple<string, string, string>(authCookies.Item1, authCookies.Item2, null);
+            _isAuthenticated = true;
+            return String.Empty;
         }
 
-        private Tuple<String, String> ExtractAuthCookies(string setCookie)
+        private bool SetAuthCookies(string setCookie)
         {
             var authCookiesMatch = Regex.Match(setCookie, AuthCookiesRegex);
             if (!authCookiesMatch.Groups[1].Success || !authCookiesMatch.Groups[2].Success)
-                return null;
+                return false;
 
             var sessionId = authCookiesMatch.Groups[1].Value;
             var userId = authCookiesMatch.Groups[2].Value;
 
-            return new Tuple<string, string>(sessionId, userId);
+            _sessionIdCookie = new Cookie("lepro.sid", sessionId);
+            _userIdCookie = new Cookie("lepro.uid", userId);
+
+            return true;
+        }
+
+        private CookieContainer GetAuthCookiesContainer()
+        {
+            var cookieContainer = new CookieContainer();
+            cookieContainer.Add(new Uri("http://leprosorium.ru/"), _sessionIdCookie);
+            cookieContainer.Add(new Uri("http://leprosorium.ru/"), _userIdCookie);
+            return cookieContainer;
+        }
+
+        private async Task<HttpResponseMessage> PerformAuthenticatedGetRequest(String url, bool isValidateStatusCode = true)
+        {
+            if (!IsAuthenticated)
+                return null;
+
+            var cookieContainer = GetAuthCookiesContainer();
+
+            var handler = new HttpClientHandler { CookieContainer = cookieContainer };
+            _client = new HttpClient(handler);
+
+            var response = await _client.GetAsync(url);
+
+            if (isValidateStatusCode)
+                return !response.IsSuccessStatusCode ? null : response;
+            else
+                return response;
+        }
+
+        private async Task<HttpResponseMessage> PerformAuthenticatedPostRequest(HttpRequestMessage message)
+        {
+            if (!IsAuthenticated)
+                return null;
+
+            var cookieContainer = GetAuthCookiesContainer();
+
+            var handler = new HttpClientHandler { CookieContainer = cookieContainer };
+            _client = new HttpClient(handler);
+
+            var response = await _client.SendAsync(message);
+            return !response.IsSuccessStatusCode ? null : response;
         }
     }
 

@@ -49,19 +49,22 @@ namespace Lab
 
         private async void TestLogin()
         {
-            var responseContent = await ConnectionAgent.Current.GetMainPage();
-            var htmlPageModel = HtmlParser.ParseMainPage(responseContent);
-            if (htmlPageModel == null)
+            if (ConnectionAgent.Current.IsAuthenticated)
             {
-                RedirectToLoginPage();
+                var htmlPageModel = await ConnectionAgent.Current.GetMainPage();
+                DisplayMainPage(htmlPageModel);
             }
+            else
+            {
+                var loginPageModel = await ConnectionAgent.Current.GetLoginPage();
 
-            DisplayMainPage(htmlPageModel);
+                var error = await ConnectionAgent.Current.Login("34567", "aaaa", "aaaa", "aaaa");
+            }
         }
 
         private void DisplayMainPage(MainPageModel htmlPageModel)
         {
-            throw new NotImplementedException();
+            
         }
 
         private void RedirectToLoginPage()
