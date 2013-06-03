@@ -7,6 +7,124 @@ namespace MetroLepra.Core
 {
     public class HtmlParser
     {
+        public static UserModel ParseUserProfile(string htmlData)
+        {
+            var user = new UserModel();
+
+            htmlData = CleanupHtml(htmlData);
+
+            var username = Regex.Match(htmlData, "<a href=\"/users/(.+?)\" usernum=\".+?\">.+?</a>").Groups[1].Value;
+
+            var userPic = Regex.Match(htmlData, "<table class=\"userpic\"><tbody><tr><td><img src=\"(.+?)\".+?/>").Groups[1].Value;
+
+            var regData = Regex.Match(htmlData, "<div class=\"userregisterdate\">(.+?)</div>").Groups[1].Value;
+            regData = Regex.Replace(regData, "\\.", "");
+            var regDataArray = regData.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+            var number = regDataArray[0];
+            var date = regDataArray[1];
+
+            var name = Regex.Match(htmlData, "<div class=\"userbasicinfo\"><h3>(.+?)</h3>").Groups[1].Value;
+            var location = Regex.Match(htmlData, "<div class=\"userego\">(.+?)</div>").Groups[1].Value;
+            var karma = Regex.Match(htmlData, "<span class=\"rating\" id=\"js-user_karma\".+?><em>(.+?)</em>").Groups[1].Value;
+
+            var statWroteMatch = Regex.Match(htmlData, "<div class=\"userstat userrating\">(.+?)</div>");
+            var statRateMatch = Regex.Match(htmlData, "<div class=\"userstat uservoterate\">Вес голоса&nbsp;&#8212; (.+?)<br.*?>Голосов в день&nbsp;&#8212; (.+?)</div>");
+
+            var userStat = Regex.Replace(statWroteMatch.Groups[1].Value, "(<([^>]+)>)", " ");
+            var voteStat = "Вес голоса&nbsp;&#8212; " + statRateMatch.Groups[1].Value + ",<br>Голосов в день&nbsp;&#8212; " + statRateMatch.Groups[2].Value;
+
+            var story = Regex.Match(htmlData, "<div class=\"userstory\">(.+?)</div>").Groups[1].Value;
+
+            var contactsMatch = Regex.Match(htmlData, "<div class=\"usercontacts\">(.+?)</div>");
+            var contacts = Regex.Split(contactsMatch.Groups[1].Value, "<br.*?>");
+
+            user.Username = username;
+            user.Userpic = userPic;
+            user.Number = number;
+            user.RegistrationDate = date;
+            user.FullName = name;
+            user.Location = location;
+            user.Karma = karma;
+            user.UserStat = userStat;
+            user.VoteStat = voteStat;
+            user.Contacts = contacts;
+            user.Description = story;
+
+            return user;
+        }
+
+        public static List<PostModel> ParsePosts(string htmlData)
+        {
+            var posts = new List<PostModel>();
+
+            htmlData = CleanupHtml(htmlData);
+
+            var postRegex = "<div class=\"post.+?id=\"(.+?)\".+?class=\"dt\">(.+?)</div>.+?<div class=\"p\">(Написал|Написала)(.+?)<a href=\".*?/users/.+?\".*?>(.+?)</a>,(.+?)в(.+?)<span>.+?<a href=\".*?/(comments|inbox)/.+?\">(.+?)</span>.+?.+?(<div class=\"vote\".+?><em>(.+?)</em></span>|</div>)(<a href=\"#\".+?class=\"plus(.*?)\">.+?<a href=\"#\".+?class=\"minus(.*?)\">|</div>)";
+            var matches = Regex.Matches(htmlData, postRegex);
+            foreach (Match match in matches)
+            {
+                var postBody = match.Groups[2].Value;
+
+                var imageRegex = "img src=\"(.+?)\"";
+                var imageMatches = Regex.Matches(postBody, imageRegex);
+                var img = "";
+
+                foreach (Match imageMatch in imageMatches)
+                {
+                    if (String.IsNullOrEmpty(img))
+                        img = "http://src.sencha.io/80/80/" + imageMatch.Groups[1].Value;
+
+                    //TODO: Optimize for screen below 720p
+                    postBody = postBody.Replace(imageMatch.Groups[1].Value, "http://src.sencha.io/" + 1280 + "/" + imageMatch.Groups[1].Value);
+                }
+
+                var text = Regex.Replace(postBody, "(<([^>]+)>)", " ");
+                if (text.Length > 140)
+                {
+                    text = text.Substring(0, 140);
+                    text += "...";
+                }
+
+                var userSub = match.Groups[5].Value.Split(new[] { "</a> в " }, StringSplitOptions.RemoveEmptyEntries);
+                var sub = userSub.Length > 1 ? Regex.Replace(userSub[1], "(<([^>]+)>)", "") : "";
+
+                var user = userSub[0];
+
+                var vote = 0;
+                if (match.Groups[12].Success && match.Groups[12].Value.Length > 0)
+                    vote = 1;
+                else if (match.Groups[13].Success && match.Groups[13].Value.Length > 0)
+                    vote = -1;
+
+                var post = new PostModel();
+                post.Id = match.Groups[1].Value.Replace("p", "");
+                post.Body = postBody;
+                post.Rating = match.Groups[11].Value;
+                post.Author = new UserModel {Username = user, Gender = match.Groups[3].Value == "Написал" ? UserGender.Male : UserGender.Female, CustomRank = match.Groups[4].Value};
+                post.Type = match.Groups[8].Value;
+                post.Url = sub;
+                post.Date = match.Groups[6].Value;
+                post.Time = match.Groups[7].Value;
+
+                var comments = Regex.Replace(match.Groups[9].Value, "(<([^>]+)>)", "");
+                comments = Regex.Replace(comments, "коммента.+?(\\s|$)", "");
+                comments = Regex.Replace(comments, " нов.+", "");
+
+                var commentsSplit = comments.Split('/');
+                post.TotalCommentsCount = commentsSplit[0].Trim();
+                if (commentsSplit.Length == 2)
+                    post.UnreadCommentsCount = commentsSplit[1].Trim();
+                
+                post.Image = img;
+                post.Text = text;
+                post.Vote = vote;
+
+                posts.Add(post);
+            }
+
+            return posts;
+        }
+
         public static MainPageModel ParseMainPage(String htmlData)
         {
             var mainPageModel = new MainPageModel();

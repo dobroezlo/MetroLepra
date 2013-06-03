@@ -70,13 +70,17 @@ namespace MetroLepra.Core
                 post.Url = jToken["domain_url"].Value<String>();
                 post.Image = img;
                 post.Text = text;
-                post.User = jToken["login"].Value<String>();
-                post.Comments = jToken["comm_count"].Value<String>() + " / " + jToken["unread"].Value<String>();
-                post.Wrote = String.Format("{0} {1}{2}", jToken["gender"].Value<int>() == 1 ? "Написал " : "Написала ",
-                                           (String.IsNullOrEmpty(jToken["user_rank"].Value<String>()) ? "" : jToken["user_rank"].Value<String>() + " "),
-                                           jToken["login"].Value<String>());
+                post.TotalCommentsCount = jToken["comm_count"].Value<String>();
+                post.UnreadCommentsCount = jToken["unread"].Value<String>();
 
-                post.When = jToken["textdate"] + " в " + jToken["posttime"];
+                post.Author = new UserModel
+                                {
+                                    Username = jToken["login"].Value<String>(), 
+                                    CustomRank = jToken["user_rank"].Value<String>(), 
+                                    Gender = (UserGender) jToken["gender"].Value<int>()
+                                };
+                post.Date = jToken["textdate"].Value<String>();
+                post.Time = jToken["posttime"].Value<String>();
                 post.Vote = jToken["user_vote"].Value<int>();
 
                 posts.Add(post);

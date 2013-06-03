@@ -58,6 +58,8 @@ namespace MetroLepra.Core
         public async Task<MainPageModel> GetMainPage()
         {
             var response = await PerformAuthenticatedGetRequest("http://leprosorium.ru/");
+            if (response == null)
+                return null;
             var responseContent = await response.Content.ReadAsStringAsync();
             return HtmlParser.ParseMainPage(responseContent);
         }
@@ -65,6 +67,8 @@ namespace MetroLepra.Core
         public async Task<LeproPanelModel> GetLeproPanel()
         {
             var response = await PerformAuthenticatedGetRequest("http://leprosorium.ru/api/lepropanel");
+            if (response == null)
+                return null;
             var responseContent = await response.Content.ReadAsStringAsync();
 
             var leproPanelModel = JsonParser.ParseLeproPanel(responseContent);
@@ -74,6 +78,8 @@ namespace MetroLepra.Core
         public async Task<List<SubLepraModel>> GetUnderground(int? page = null)
         {
             var response = await PerformAuthenticatedGetRequest("http://leprosorium.ru/underground/subscribers/" + page.GetValueOrDefault(1));
+            if (response == null)
+                return null;
             var responseContent = await response.Content.ReadAsStringAsync();
 
             var underground = HtmlParser.ParseUnderground(responseContent);
@@ -83,6 +89,8 @@ namespace MetroLepra.Core
         public async Task<DemocracyPageModel> GetDemocracyPage()
         {
             var response = await PerformAuthenticatedGetRequest("http://leprosorium.ru/democracy/");
+            if (response == null)
+                return null;
             var responseContent = await response.Content.ReadAsStringAsync();
 
             var model = HtmlParser.ParseDemocracyPage(responseContent);
@@ -98,10 +106,117 @@ namespace MetroLepra.Core
                                                             });
 
             var response = await PerformAuthenticatedPostRequest(message);
+            if (response == null)
+                return null;
             var responseContent = await response.Content.ReadAsStringAsync();
             var posts = JsonParser.ParsePosts(responseContent);
 
             return posts;
+        }
+
+        public async Task<List<PostModel>> GetMyStuff()
+        {
+            var response = await PerformAuthenticatedGetRequest("http://leprosorium.ru/my/");
+            if (response == null)
+                return null;
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            var posts = HtmlParser.ParsePosts(responseContent);
+            return posts;
+        }
+
+        public async Task<List<PostModel>> GetFavourites()
+        {
+            var response = await PerformAuthenticatedGetRequest("http://leprosorium.ru/my/favourites/");
+            if (response == null)
+                return null;
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            var posts = HtmlParser.ParsePosts(responseContent);
+            return posts;
+        }
+
+        public async Task<List<PostModel>> GetInbox()
+        {
+            var response = await PerformAuthenticatedGetRequest("http://leprosorium.ru/my/inbox/");
+            if (response == null)
+                return null;
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            var posts = HtmlParser.ParsePosts(responseContent);
+            return posts;
+        }
+
+        public async Task<List<CommentModel>> GetComments(PostModel post)
+        {
+            
+        }
+
+        public async Task<UserModel> GetUser(string username)
+        {
+            var response = await PerformAuthenticatedGetRequest(String.Format("http://leprosorium.ru/users/{0}", username));
+            if (response == null)
+                return null;
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            var user = HtmlParser.ParseUserProfile(responseContent);
+            return user;
+        }
+
+        public async Task<bool> VotePost(PostModel post, string voteValue, string votingCode)
+        {
+            var url = "http://";
+            if (!String.IsNullOrEmpty(post.Url))
+                url += post.Url;
+            else
+                url += "leprosorium.ru";
+
+            url += "/rate/";
+
+            var message = new HttpRequestMessage(HttpMethod.Post, new Uri(url));
+            message.Content = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>
+                                                            {
+                                                                new KeyValuePair<string, string>("type", "1"),
+                                                                new KeyValuePair<string, string>("id", post.Id),
+                                                                new KeyValuePair<string, string>("wtf", votingCode),
+                                                                new KeyValuePair<string, string>("value", voteValue),
+                                                            });
+
+            var response = await PerformAuthenticatedPostRequest(message);
+
+            return response != null;
+        }
+
+        public async Task<bool> VoteComment(PostModel post, CommentModel comment, string voteValue, string votingCode)
+        {
+            var url = "http://";
+            if (!String.IsNullOrEmpty(post.Url))
+                url += post.Url;
+            else
+                url += "leprosorium.ru";
+
+            url += "/rate/";
+
+            var message = new HttpRequestMessage(HttpMethod.Post, new Uri(url));
+            message.Content = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>
+                                                            {
+                                                                new KeyValuePair<string, string>("type", "0"),
+                                                                new KeyValuePair<string, string>("post_id", post.Id),
+                                                                new KeyValuePair<string, string>("wtf", votingCode),
+                                                                new KeyValuePair<string, string>("value", voteValue),
+                                                                new KeyValuePair<string, string>("id", comment.Id),
+                                                            });
+
+            var response = await PerformAuthenticatedPostRequest(message);
+
+            return response != null;
+        }
+
+
+
+        public void Logout()
+        {
+            //TODO
         }
 
         public async Task<Stream> GetImageStream(String path)

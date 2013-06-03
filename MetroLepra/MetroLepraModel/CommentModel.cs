@@ -8,5 +8,6 @@ namespace MetroLepra.Model
 {
     public class CommentModel
     {
+        public string Id { get; set; }
     }
 }

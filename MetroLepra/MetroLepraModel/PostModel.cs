@@ -20,7 +20,7 @@ namespace MetroLepra.Model
 
         public string Text { get; set; }
 
-        public string User { get; set; }
+        public UserModel Author { get; set; }
 
         public string Comments { get; set; }
 
@@ -29,5 +29,15 @@ namespace MetroLepra.Model
         public string When { get; set; }
 
         public int Vote { get; set; }
+
+        public string TotalCommentsCount { get; set; }
+
+        public string UnreadCommentsCount { get; set; }
+
+        public string Date { get; set; }
+
+        public string Time { get; set; }
+
+        public string Type { get; set; }
     }
 }
