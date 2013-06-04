@@ -149,7 +149,24 @@ namespace MetroLepra.Core
 
         public async Task<List<CommentModel>> GetComments(PostModel post)
         {
-            
+            var url = String.Empty;
+
+            if (post.Type == "inbox")
+                url = "http://leprosorium.ru/my/inbox/" + post.Id;
+            else
+            {
+                var server = "leprosorium.ru";
+                url = String.Format("http://{0}/comments/{1}", server, post.Id);
+            }
+
+            var response = await PerformAuthenticatedGetRequest(url);
+            if (response == null)
+                return null;
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            post.AddCommentCode = HtmlParser.ParseAddCommentCode(responseContent);
+            var comments = HtmlParser.ParseComments(responseContent);
+            return comments;
         }
 
         public async Task<UserModel> GetUser(string username)

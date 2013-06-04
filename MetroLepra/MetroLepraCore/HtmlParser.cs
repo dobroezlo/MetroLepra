@@ -125,13 +125,76 @@ namespace MetroLepra.Core
             return posts;
         }
 
+        public static List<CommentModel> ParseComments(String htmlData)
+        {
+            var comments = new List<CommentModel>();
+
+            htmlData = CleanupHtml(htmlData);
+
+            var commentsRegex = "<div id=\"(.+?)\" class=\"post tree(.+?)\"><div class=\"dt\">(.+?)</div>.+?<div class=\"p\">(Написал|Написала)(.+?)<a href=\".*?/users/.+?\".*?>(.+?)</a>,(.+?)в(.+?)<span>.+?(<div class=\"vote\".+?><em>(.+?)</em></span>|</div>)(<a href=\"#\".+?class=\"plus(.*?)\">.+?<a href=\"#\".+?class=\"minus(.*?)\">|</div>)";
+
+            htmlData = htmlData.Substring(htmlData.IndexOf("id=\"js-commentsHolder\""));
+            var commentsMatches = Regex.Matches(htmlData, commentsRegex);
+
+            foreach (Match match in commentsMatches)
+            {
+                var text = match.Groups[3].Value;
+
+                var imageRegex = "img src=\"(.+?)\"";
+                var imageMatches = Regex.Matches(text, imageRegex);
+
+                foreach (Match imageMatch in imageMatches)
+                {
+                    //TODO: Optimize for screen below 720p
+                    text = text.Replace(imageMatch.Groups[1].Value, "http://src.sencha.io/" + 1280 + "/" + imageMatch.Groups[1].Value);
+                }
+
+                var vote = 0;
+                if (!String.IsNullOrEmpty(match.Groups[10].Value))
+                    vote = 1;
+                else if (!String.IsNullOrEmpty(match.Groups[11].Value))
+                    vote = -1;
+
+                var indent = 0;
+                var indentMatch = Regex.Match(match.Groups[2].Value, "indent_(.+?) ");
+
+                if (indentMatch.Success)
+                    indent = Convert.ToInt32(indentMatch.Groups[1].Value);
+                if (indent > 15)
+                    indent = 15;
+
+                text = Regex.Replace(text, "<p.*?>", "");
+                text = Regex.Replace(text, "</p>", "");
+                text = Regex.Replace(text, "<nonimg", "<img");
+
+                var isNew = match.Groups[2].Value.IndexOf("new") != -1;
+                var user = match.Groups[6].Value;
+
+                var comment = new CommentModel();
+                comment.Id = match.Groups[1].Value;
+                comment.IsNew = isNew;
+                comment.Indent = indent;
+                comment.Text = text;
+                comment.Author = new UserModel { Username = user, Gender = match.Groups[4].Value == "Написал" ? UserGender.Male : UserGender.Female, CustomRank = match.Groups[5].Value };
+                comment.Rating = match.Groups[9].Value;
+                comment.Date = match.Groups[7].Value;
+                comment.Time = match.Groups[8].Value;
+                
+                comment.Vote = vote;
+
+                comments.Add(comment);
+            }
+
+            return comments;
+        }
+
         public static MainPageModel ParseMainPage(String htmlData)
         {
             var mainPageModel = new MainPageModel();
 
             htmlData = CleanupHtml(htmlData);
 
-            mainPageModel.PostVoteCode = Regex.Match(htmlData, "wtf_vote = '(.+?)'").Groups[1].Value;
+            mainPageModel.VoteCode = Regex.Match(htmlData, "wtf_vote = '(.+?)'").Groups[1].Value;
             mainPageModel.MyThingsHandlerCode = Regex.Match(htmlData, "mythingsHandler.wtf = '(.+?)'").Groups[1].Value;
             mainPageModel.ChatHandlerCode = Regex.Match(htmlData, "chatHandler.wtf = '(.+?)'").Groups[1].Value;
             mainPageModel.Username = Regex.Match(htmlData, "<div id=\"greetings\" class=\"columns_wrapper\">.+?<a href=\".+?\">(.+?)</a>").Groups[1].Value;
@@ -207,6 +270,14 @@ namespace MetroLepra.Core
             model.Term = democracyMatch.Groups[2].Value;
 
             return model;
+        }
+
+        public static String ParseAddCommentCode(string htmlData)
+        {
+            htmlData = CleanupHtml(htmlData);
+
+            var addCommentCode = Regex.Match(htmlData, "commentsHandler.wtf = '(.+?)'").Groups[1].Value;
+            return addCommentCode;
         }
 
         private static string CleanupHtml(string htmlData)

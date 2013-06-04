@@ -39,5 +39,7 @@ namespace MetroLepra.Model
         public string Time { get; set; }
 
         public string Type { get; set; }
+
+        public string AddCommentCode { get; set; }
     }
 }

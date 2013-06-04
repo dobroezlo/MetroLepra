@@ -8,7 +8,7 @@ namespace MetroLepra.Model
 {
     public class MainPageModel
     {
-        public string PostVoteCode { get; set; }
+        public string VoteCode { get; set; }
 
         public string MyThingsHandlerCode { get; set; }
 
