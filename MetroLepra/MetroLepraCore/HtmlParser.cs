@@ -7,6 +7,8 @@ namespace MetroLepra.Core
 {
     public class HtmlParser
     {
+        private const string HtmlAnchorRegex = "(<([^>]+)>)";
+
         public static UserModel ParseUserProfile(string htmlData)
         {
             var user = new UserModel();
@@ -30,7 +32,7 @@ namespace MetroLepra.Core
             var statWroteMatch = Regex.Match(htmlData, "<div class=\"userstat userrating\">(.+?)</div>");
             var statRateMatch = Regex.Match(htmlData, "<div class=\"userstat uservoterate\">Вес голоса&nbsp;&#8212; (.+?)<br.*?>Голосов в день&nbsp;&#8212; (.+?)</div>");
 
-            var userStat = Regex.Replace(statWroteMatch.Groups[1].Value, "(<([^>]+)>)", " ");
+            var userStat = Regex.Replace(statWroteMatch.Groups[1].Value, HtmlAnchorRegex, " ");
             var voteStat = "Вес голоса&nbsp;&#8212; " + statRateMatch.Groups[1].Value + ",<br>Голосов в день&nbsp;&#8212; " + statRateMatch.Groups[2].Value;
 
             var story = Regex.Match(htmlData, "<div class=\"userstory\">(.+?)</div>").Groups[1].Value;
@@ -78,7 +80,7 @@ namespace MetroLepra.Core
                     postBody = postBody.Replace(imageMatch.Groups[1].Value, "http://src.sencha.io/" + 1280 + "/" + imageMatch.Groups[1].Value);
                 }
 
-                var text = Regex.Replace(postBody, "(<([^>]+)>)", " ");
+                var text = Regex.Replace(postBody, HtmlAnchorRegex, " ");
                 if (text.Length > 140)
                 {
                     text = text.Substring(0, 140);
@@ -86,7 +88,7 @@ namespace MetroLepra.Core
                 }
 
                 var userSub = match.Groups[5].Value.Split(new[] { "</a> в " }, StringSplitOptions.RemoveEmptyEntries);
-                var sub = userSub.Length > 1 ? Regex.Replace(userSub[1], "(<([^>]+)>)", "") : "";
+                var sub = userSub.Length > 1 ? Regex.Replace(userSub[1], HtmlAnchorRegex, "") : "";
 
                 var user = userSub[0];
 
@@ -106,7 +108,7 @@ namespace MetroLepra.Core
                 post.Date = match.Groups[6].Value;
                 post.Time = match.Groups[7].Value;
 
-                var comments = Regex.Replace(match.Groups[9].Value, "(<([^>]+)>)", "");
+                var comments = Regex.Replace(match.Groups[9].Value, HtmlAnchorRegex, "");
                 comments = Regex.Replace(comments, "коммента.+?(\\s|$)", "");
                 comments = Regex.Replace(comments, " нов.+", "");
 
@@ -232,7 +234,7 @@ namespace MetroLepra.Core
             var loginInfoRegex = "<img alt=\"captcha\" src=\"(.+?)\" width=\"250\" height=\"60\" />.+?<input type=\"hidden\" name=\"logincode\" value=\"(.+?)\" />";
             var loginInfoMatch = Regex.Match(htmlData, loginInfoRegex);
 
-            var loginPageModel = new LoginPageModel {CaptchaImageUrl = loginInfoMatch.Groups[1].Value, LoginCode = loginInfoMatch.Groups[2].Value};
+            var loginPageModel = new LoginPageModel {CaptchaImageUrl = "http://leprosorium.ru" + loginInfoMatch.Groups[1].Value, LoginCode = loginInfoMatch.Groups[2].Value};
 
             return loginPageModel;
         }
@@ -294,7 +296,7 @@ namespace MetroLepra.Core
 
             var errorRegex = "<div class=\"error\">(.+?)</div>";
             var errorMatch = Regex.Match(htmlData, errorRegex);
-            return errorMatch.Groups[1].Value;
+            return Regex.Replace(errorMatch.Groups[1].Value, HtmlAnchorRegex, "");
         }
     }
 }
