@@ -1,0 +1,18 @@
+<Model:PostModel xmlns:Model="clr-namespace:MetroLepra.Model;assembly=MetroLepra.Model" xmlns:System="clr-namespace:System;assembly=mscorlib" AddCommentCode="Class vestibulum nam" Body="Parturient vel magnis fringilla" Comments="Mattis nam" Date="Habitasse vestibulum eleifend" Id="Nunc vestibulum" HeaderImageUrl="Commodo odio" Rating="Sed adipiscing conubia mauris orci" Time="Cubilia est pede" HeaderText="Dis augue" TotalCommentsCount="Parturient quam dolor" Type="Facilisi fames hendrerit quis dapibus" Url="Imperdiet vestibulum" UnreadCommentsCount="Himenaeos vestibulum egestas hac" Vote="38" Wrote="Penatibus faucibus" When="Euismod mollis adipiscing feugiat malesuada">
+	<Model:PostModel.Author>
+		<Model:UserModel CustomRank="Convallis hac" Description="Accumsan leo elit" FullName="Aliquam fusce aliquet" Gender="Female" Id="Mus nec cursus non per" Karma="Dictum sed" Location="Lectus enim libero erat lorem" Number="Vestibulum adipiscing ligula morbi dignissim" RegistrationDate="Sem nulla bibendum litora" Username="Eros nibh" Userpic="Nisi dictumst blandit" UserStat="Elementum sit proin facilisis luctus" VoteStat="Nisl fermentum">
+			<Model:UserModel.Contacts>
+				<System:String>Aliquam curae cras aenean maecenas</System:String>
+				<System:String>Integer duis</System:String>
+				<System:String>Mauris nunc donec nullam</System:String>
+				<System:String>Adipiscing amet parturient</System:String>
+				<System:String>Curabitur praesent</System:String>
+				<System:String>Phasellus ante aptent</System:String>
+				<System:String>Sed quisque arcu auctor</System:String>
+				<System:String>Diam eget vestibulum dis</System:String>
+				<System:String>Congue etiam</System:String>
+				<System:String>Consequat vivamus est</System:String>
+			</Model:UserModel.Contacts>
+		</Model:UserModel>
+	</Model:PostModel.Author>
+</Model:PostModel>

@@ -1,37 +1,67 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
+using MetroLepra.App.Interfaces;
+using MetroLepra.Core;
 
 namespace MetroLepra.App.ViewModel
 {
-    /// <summary>
-    /// This class contains properties that the main View can data bind to.
-    /// <para>
-    /// Use the <strong>mvvminpc</strong> snippet to add bindable properties to this ViewModel.
-    /// </para>
-    /// <para>
-    /// You can also use Blend to data bind with the tool's support.
-    /// </para>
-    /// <para>
-    /// See http://www.galasoft.ch/mvvm
-    /// </para>
-    /// </summary>
     public class MainViewModel : ViewModelBase
     {
+        private readonly INavigationService _navigationService;
+
+        private List<PostViewModel> _generalPosts;
+
+        private bool _isBackgroundProccessRunning;
+
         /// <summary>
-        /// Initializes a new instance of the MainViewModel class.
+        ///     Initializes a new instance of the MainViewModel class.
         /// </summary>
-        public MainViewModel()
+        public MainViewModel(INavigationService navigationService)
         {
-            ////if (IsInDesignMode)
-            ////{
-            ////    // Code runs in Blend --> create design time data.
-            ////}
-            ////else
-            ////{
-            ////    // Code runs "for real"
-            ////}
+            _navigationService = navigationService;
         }
 
+        public bool IsBackgroundProccessRunning
+        {
+            get { return _isBackgroundProccessRunning; }
+            set
+            {
+                if (value == _isBackgroundProccessRunning)
+                    return;
 
-        
+                _isBackgroundProccessRunning = value;
+                RaisePropertyChanged(() => IsBackgroundProccessRunning);
+            }
+        }
+
+        public List<PostViewModel> GeneralPosts
+        {
+            get { return _generalPosts; }
+            set
+            {
+                if (value == _generalPosts)
+                    return;
+
+                _generalPosts = value;
+                RaisePropertyChanged(() => GeneralPosts);
+            }
+        }
+
+        public async Task LoadGeneralPosts()
+        {
+            IsBackgroundProccessRunning = true;
+            var latestPosts = await ConnectionAgent.Current.GetLatestPosts();
+
+            var latestPostsViewModel = latestPosts.Select(x => new PostViewModel(x)).ToList();
+            foreach (var postViewModel in latestPostsViewModel)
+            {
+                await postViewModel.DownloadHeaderImage();
+            }
+
+            GeneralPosts = latestPostsViewModel;
+            IsBackgroundProccessRunning = false;
+        }
     }
 }

@@ -61,6 +61,8 @@ namespace MetroLepra.App.ViewModel
             get { return ServiceLocator.Current.GetInstance<LoginViewModel>(); }
         }
 
+        public static Uri LoginPageUri = new Uri("/View/LoginPage.xaml", UriKind.Relative);
+
         public static void Cleanup()
         {
             // TODO Clear the ViewModels

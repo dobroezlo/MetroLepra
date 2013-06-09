@@ -1,25 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.IsolatedStorage;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using MetroLepra.Model;
-using Newtonsoft.Json.Linq;
 
 namespace MetroLepra.Core
 {
     public class ConnectionAgent
     {
-        private const string AuthCookiesRegex = "lepro.sid=(.+?); domain=.leprosorium.ru; path=/,  lepro.uid=(.+?); domain=.leprosorium.ru; path=/,";
-        private HttpClient _client;
+        private const string AuthCookiesRegex = "lepro.sid=(.+?);.+?lepro.uid=(.+?);";
+
+        private const string IsAuthenticatedSettingName = "IsAuthenticated";
+        private const string SessionIdCookieSettingName = "SessionIdCookie";
+        private const string UserIdCookieSettingName = "UserIdCookie";
         private static ConnectionAgent _instance;
 
-        private Cookie _sessionIdCookie;
-        private Cookie _userIdCookie;
-        private bool _isAuthenticated;
+        private readonly IsolatedStorageSettings _settings;
+        private HttpClient _client;
 
         /// <summary>
         ///     Prevents a default instance of the <see cref="ConnectionAgent" /> class from being created.
@@ -27,6 +29,8 @@ namespace MetroLepra.Core
         private ConnectionAgent()
         {
             _client = new HttpClient();
+            _settings = IsolatedStorageSettings.ApplicationSettings;
+            //_settings.Clear();
         }
 
         /// <summary>
@@ -38,11 +42,21 @@ namespace MetroLepra.Core
         }
 
         /// <summary>
-        /// Is user logged in
+        ///     Is user logged in
         /// </summary>
         public bool IsAuthenticated
         {
-            get { return _isAuthenticated; }
+            get
+            {
+                if (!_settings.Contains(IsAuthenticatedSettingName))
+                    _settings[IsAuthenticatedSettingName] = false;
+
+                return Convert.ToBoolean(_settings[IsAuthenticatedSettingName]);
+            }
+            private set
+            {
+                _settings[IsAuthenticatedSettingName] = value;
+            }
         }
 
         public async Task<LoginPageModel> GetLoginPage()
@@ -97,7 +111,7 @@ namespace MetroLepra.Core
             return model;
         }
 
-        public async Task<List<PostModel>> GetLatestPosts(int? page)
+        public async Task<List<PostModel>> GetLatestPosts(int? page = null)
         {
             var message = new HttpRequestMessage(HttpMethod.Post, new Uri("http://leprosorium.ru/idxctl/"));
             message.Content = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>
@@ -230,7 +244,6 @@ namespace MetroLepra.Core
         }
 
 
-
         public void Logout()
         {
             //TODO
@@ -247,7 +260,7 @@ namespace MetroLepra.Core
         }
 
         /// <summary>
-        /// Attempts to login user with specified credentials
+        ///     Attempts to login user with specified credentials
         /// </summary>
         /// <param name="username"></param>
         /// <param name="password"></param>
@@ -259,7 +272,7 @@ namespace MetroLepra.Core
             var postString = String.Format("user={0}&pass={1}&captcha={2}&logincode={3}&save=1", username, password, captcha, loginCode);
             var byteArray = Encoding.UTF8.GetBytes(postString);
 
-            var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://leprosorium.ru/login/");
+            var httpWebRequest = (HttpWebRequest) WebRequest.Create("http://leprosorium.ru/login/");
             httpWebRequest.AllowAutoRedirect = false;
             httpWebRequest.AllowReadStreamBuffering = true;
             httpWebRequest.Method = HttpMethod.Post.Method;
@@ -284,7 +297,7 @@ namespace MetroLepra.Core
                 }
             }
 
-            _isAuthenticated = true;
+            IsAuthenticated = true;
             return String.Empty;
         }
 
@@ -297,8 +310,8 @@ namespace MetroLepra.Core
             var sessionId = authCookiesMatch.Groups[1].Value;
             var userId = authCookiesMatch.Groups[2].Value;
 
-            _sessionIdCookie = new Cookie("lepro.sid", sessionId);
-            _userIdCookie = new Cookie("lepro.uid", userId);
+            _settings[SessionIdCookieSettingName] = sessionId;
+            _settings[UserIdCookieSettingName] = userId;
 
             return true;
         }
@@ -306,8 +319,15 @@ namespace MetroLepra.Core
         private CookieContainer GetAuthCookiesContainer()
         {
             var cookieContainer = new CookieContainer();
-            cookieContainer.Add(new Uri("http://leprosorium.ru/"), _sessionIdCookie);
-            cookieContainer.Add(new Uri("http://leprosorium.ru/"), _userIdCookie);
+            cookieContainer.Add(new Uri("http://leprosorium.ru/"),
+                                _settings.Contains(SessionIdCookieSettingName)
+                                    ? new Cookie("lepro.sid", (String) _settings[SessionIdCookieSettingName])
+                                    : null);
+
+            cookieContainer.Add(new Uri("http://leprosorium.ru/"),
+                                _settings.Contains(UserIdCookieSettingName)
+                                    ? new Cookie("lepro.uid", (String) _settings[UserIdCookieSettingName])
+                                    : null);
             return cookieContainer;
         }
 
@@ -318,7 +338,7 @@ namespace MetroLepra.Core
 
             var cookieContainer = GetAuthCookiesContainer();
 
-            var handler = new HttpClientHandler { CookieContainer = cookieContainer };
+            var handler = new HttpClientHandler {CookieContainer = cookieContainer};
             _client = new HttpClient(handler);
 
             var response = await _client.GetAsync(url);
@@ -336,7 +356,7 @@ namespace MetroLepra.Core
 
             var cookieContainer = GetAuthCookiesContainer();
 
-            var handler = new HttpClientHandler { CookieContainer = cookieContainer };
+            var handler = new HttpClientHandler {CookieContainer = cookieContainer};
             _client = new HttpClient(handler);
 
             var response = await _client.SendAsync(message);

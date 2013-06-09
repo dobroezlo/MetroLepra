@@ -11,35 +11,7 @@
   <!--Application Resources-->
   <Application.Resources>
     <local:LocalizedStrings xmlns:local="clr-namespace:MetroLepra.App" x:Key="LocalizedStrings" />
-    <vm:ViewModelLocator x:Key="Locator" d:IsDataSource="True" />
-
-    <DataTemplate x:Key="PostItemTemplate">
-      <Grid>
-        <Grid.RowDefinitions>
-          <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <TextBlock Grid.Row="0" TextWrapping="Wrap" Text="{Binding Text}" />
-        <Grid>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
-          </Grid.ColumnDefinitions>
-
-          <TextBlock Grid.Column="0" Text="{Binding Author}"/>
-          <TextBlock Grid.Row="1">|</TextBlock>
-          <TextBlock Grid.Row="2" Text="{Binding Date}"/>
-          <TextBlock Grid.Row="3">
-            <TextBlock.Text>
-              <Binding Source="Time" StringFormat=" в {0}" />
-            </TextBlock.Text>
-          </TextBlock>
-        </Grid>
-      </Grid>
-    </DataTemplate>
+    <vm:ViewModelLocator x:Key="Locator" d:IsDataSource="True" />    
   </Application.Resources>
 
   <Application.ApplicationLifetimeObjects>

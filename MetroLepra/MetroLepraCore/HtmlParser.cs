@@ -1,7 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
+using HtmlAgilityPack;
 using MetroLepra.Model;
+using Microsoft.Phone;
 
 namespace MetroLepra.Core
 {
@@ -117,8 +124,8 @@ namespace MetroLepra.Core
                 if (commentsSplit.Length == 2)
                     post.UnreadCommentsCount = commentsSplit[1].Trim();
                 
-                post.Image = img;
-                post.Text = text;
+                post.HeaderImageUrl = img;
+                post.HeaderText = text;
                 post.Vote = vote;
 
                 posts.Add(post);
@@ -297,6 +304,45 @@ namespace MetroLepra.Core
             var errorRegex = "<div class=\"error\">(.+?)</div>";
             var errorMatch = Regex.Match(htmlData, errorRegex);
             return Regex.Replace(errorMatch.Groups[1].Value, HtmlAnchorRegex, "");
+        }
+
+        public static async Task<List<UIElement>> ConvertHtmlToXaml(string htmlData)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(htmlData);
+
+            var nodes = doc.DocumentNode.DescendantNodes().ToList();
+
+            var elements = new List<UIElement>();
+
+            foreach (var htmlNode in nodes)
+            {
+                if (htmlNode.Name == "#text")
+                {
+                    var text = new TextBlock();
+                    text.TextWrapping = TextWrapping.Wrap;
+                    text.Text = htmlNode.InnerText;
+                    elements.Add(text);
+                }
+                else if (htmlNode.Name == "p")
+                {
+                    var text = new TextBlock();
+                    text.Inlines.Add(new LineBreak());
+                    elements.Add(text);
+                }
+                else if (htmlNode.Name == "img")
+                {
+                    var src = Regex.Match(htmlNode.OuterHtml, "<img src=\"(.+?)\"").Groups[1].Value;
+
+                    var image = new Image();
+                    var imageStream = await ConnectionAgent.Current.GetImageStream(src);
+                    image.Source = PictureDecoder.DecodeJpeg(imageStream);
+
+                    elements.Add(image);
+                }
+            }
+
+            return elements;
         }
     }
 }

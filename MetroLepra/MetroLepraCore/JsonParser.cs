@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using MetroLepra.Model;
 using Newtonsoft.Json.Linq;
 
@@ -41,21 +43,23 @@ namespace MetroLepra.Core
             {
                 var jToken = postJObject.First;
 
-                var postBody = jToken["body"].Value<String>();
+                var postBody = HttpUtility.HtmlDecode(jToken["body"].Value<String>());
 
                 var imageRegex = "img src=\"(.+?)\"";
                 var imageMatches = Regex.Matches(postBody, imageRegex);
-                var img = "";
+                var headerImage = "";
 
                 foreach (Match match in imageMatches)
                 {
-                    if (String.IsNullOrEmpty(img))
-                        img = "http://src.sencha.io/80/80/" + match.Groups[1].Value;
+                    if (String.IsNullOrEmpty(headerImage))
+                        headerImage = "http://src.sencha.io/80/80/" + match.Groups[1].Value;
 
                     //TODO: Optimize for screen below 720p
-                    postBody = postBody.Replace(match.Groups[1].Value, "http://src.sencha.io/" + 1280 + "/" + match.Groups[1].Value);
+                    //postBody = postBody.Replace(match.Groups[1].Value, "http://src.sencha.io/" + 1280 + "/" + match.Groups[1].Value);
                 }
 
+                var doc = new HtmlDocument();
+                doc.LoadHtml(postBody);
                 var text = Regex.Replace(postBody, "(<([^>]+)>)", " ");
                 if (text.Length > 140)
                 {
@@ -68,8 +72,8 @@ namespace MetroLepra.Core
                 post.Body = postBody;
                 post.Rating = jToken["rating"].Value<String>();
                 post.Url = jToken["domain_url"].Value<String>();
-                post.Image = img;
-                post.Text = text;
+                post.HeaderImageUrl = headerImage;
+                post.HeaderText = text;
                 post.TotalCommentsCount = jToken["comm_count"].Value<String>();
                 post.UnreadCommentsCount = jToken["unread"].Value<String>();
 

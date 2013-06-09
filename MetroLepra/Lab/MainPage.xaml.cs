@@ -10,6 +10,7 @@ using MetroLepra.Model;
 using Microsoft.Phone.Controls;
 using Microsoft.Phone.Shell;
 using Lab.Resources;
+using System.Runtime.InteropServices;
 
 namespace Lab
 {
@@ -58,7 +59,7 @@ namespace Lab
             {
                 var loginPageModel = await ConnectionAgent.Current.GetLoginPage();
 
-                var error = await ConnectionAgent.Current.Login("34567", "aaaa", "aaaa", "aaaa");
+                var error = await ConnectionAgent.Current.Login("dobroe-z", "aaaa", "aaaa", "aaaa");
             }
         }
 
