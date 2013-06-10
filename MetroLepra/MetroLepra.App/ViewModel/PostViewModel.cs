@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 using GalaSoft.MvvmLight;
 using MetroLepra.Core;
 using MetroLepra.Model;
@@ -13,7 +14,7 @@ namespace MetroLepra.App.ViewModel
     public class PostViewModel : ViewModelBase
     {
         private readonly PostModel _model;
-        private Image _headerImage;
+        private WriteableBitmap _headerImage;
 
         public PostViewModel(PostModel postModel)
         {
@@ -98,7 +99,7 @@ namespace MetroLepra.App.ViewModel
             }
         }
 
-        public Image HeaderImage
+        public WriteableBitmap HeaderImage
         {
             get { return _headerImage; }
             set
@@ -119,7 +120,7 @@ namespace MetroLepra.App.ViewModel
                 return;
 
             var imageStream = await ConnectionAgent.Current.GetImageStream(HeaderImageUrl);
-            HeaderImage = new Image {Source = PictureDecoder.DecodeJpeg(imageStream)};
+            HeaderImage = PictureDecoder.DecodeJpeg(imageStream);
         }
     }
 }
