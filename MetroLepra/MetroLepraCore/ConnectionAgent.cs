@@ -339,6 +339,8 @@ namespace MetroLepra.Core
             var cookieContainer = GetAuthCookiesContainer();
 
             var handler = new HttpClientHandler {CookieContainer = cookieContainer};
+            if (handler.SupportsAutomaticDecompression)
+                handler.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             _client = new HttpClient(handler);
 
             var response = await _client.GetAsync(url);
@@ -357,6 +359,8 @@ namespace MetroLepra.Core
             var cookieContainer = GetAuthCookiesContainer();
 
             var handler = new HttpClientHandler {CookieContainer = cookieContainer};
+            if (handler.SupportsAutomaticDecompression)
+                handler.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             _client = new HttpClient(handler);
 
             var response = await _client.SendAsync(message);

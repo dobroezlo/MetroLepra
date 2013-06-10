@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
@@ -11,32 +12,19 @@ namespace MetroLepra.App.ViewModel
     {
         private readonly INavigationService _navigationService;
 
-        private List<PostViewModel> _generalPosts;
+        private ObservableCollection<PostViewModel> _generalPosts;
 
-        private bool _isBackgroundProccessRunning;
+        private ObservableCollection<PostViewModel> _myStuffPosts;
 
         /// <summary>
-        ///     Initializes a new instance of the MainViewModel class.
+        ///   Initializes a new instance of the MainViewModel class.
         /// </summary>
         public MainViewModel(INavigationService navigationService)
         {
             _navigationService = navigationService;
         }
 
-        public bool IsBackgroundProccessRunning
-        {
-            get { return _isBackgroundProccessRunning; }
-            set
-            {
-                if (value == _isBackgroundProccessRunning)
-                    return;
-
-                _isBackgroundProccessRunning = value;
-                RaisePropertyChanged(() => IsBackgroundProccessRunning);
-            }
-        }
-
-        public List<PostViewModel> GeneralPosts
+        public ObservableCollection<PostViewModel> GeneralPosts
         {
             get { return _generalPosts; }
             set
@@ -49,19 +37,43 @@ namespace MetroLepra.App.ViewModel
             }
         }
 
+        public ObservableCollection<PostViewModel> MyStuffPosts
+        {
+            get { return _myStuffPosts; }
+            set
+            {
+                if (value == _myStuffPosts)
+                    return;
+
+                _myStuffPosts = value;
+                RaisePropertyChanged(() => MyStuffPosts);
+            }
+        }
+
         public async Task LoadGeneralPosts()
         {
-            IsBackgroundProccessRunning = true;
             var latestPosts = await ConnectionAgent.Current.GetLatestPosts();
 
             var latestPostsViewModel = latestPosts.Select(x => new PostViewModel(x)).ToList();
-            foreach (var postViewModel in latestPostsViewModel)
+            GeneralPosts = new ObservableCollection<PostViewModel>(latestPostsViewModel);
+
+            foreach (var postViewModel in GeneralPosts)
             {
                 await postViewModel.DownloadHeaderImage();
             }
+        }
 
-            GeneralPosts = latestPostsViewModel;
-            IsBackgroundProccessRunning = false;
+        public async Task LoadMyStuffPosts()
+        {
+            var myStuff = await ConnectionAgent.Current.GetMyStuff();
+
+            var latestPostsViewModel = myStuff.Select(x => new PostViewModel(x)).ToList();
+            MyStuffPosts = new ObservableCollection<PostViewModel>(latestPostsViewModel);
+
+            foreach (var postViewModel in MyStuffPosts)
+            {
+                await postViewModel.DownloadHeaderImage();
+            }
         }
     }
 }

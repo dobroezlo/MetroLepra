@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using GalaSoft.MvvmLight;
 using MetroLepra.Core;
@@ -15,6 +14,7 @@ namespace MetroLepra.App.ViewModel
     {
         private readonly PostModel _model;
         private WriteableBitmap _headerImage;
+        private bool _isBackgroundProccessRunning;
 
         public PostViewModel(PostModel postModel)
         {
@@ -114,13 +114,29 @@ namespace MetroLepra.App.ViewModel
 
         public List<UIElement> BodyXaml { get; set; }
 
+        public bool IsBackgroundProccessRunning
+        {
+            get { return _isBackgroundProccessRunning; }
+            set
+            {
+                if (value == _isBackgroundProccessRunning)
+                    return;
+
+                _isBackgroundProccessRunning = value;
+                RaisePropertyChanged(() => IsBackgroundProccessRunning);
+            }
+        }
+
+
         public async Task DownloadHeaderImage()
         {
             if (String.IsNullOrEmpty(HeaderImageUrl))
                 return;
 
+            IsBackgroundProccessRunning = true;
             var imageStream = await ConnectionAgent.Current.GetImageStream(HeaderImageUrl);
             HeaderImage = PictureDecoder.DecodeJpeg(imageStream);
+            IsBackgroundProccessRunning = false;
         }
     }
 }

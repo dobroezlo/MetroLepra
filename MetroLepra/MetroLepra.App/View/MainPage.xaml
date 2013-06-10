@@ -21,7 +21,8 @@
 
   <!--LayoutRoot contains the root grid where all other page content is placed-->
   <Grid x:Name="LayoutRoot">
-    <phone:Panorama Title="{Binding LocalizedResources.ApplicationTitle, Mode=OneWay, Source={StaticResource LocalizedStrings}}" DefaultItem="{Binding ElementName=mainItem}">
+    <phone:Panorama Title="{Binding LocalizedResources.ApplicationTitle, Mode=OneWay, Source={StaticResource LocalizedStrings}}" 
+                    DefaultItem="{Binding ElementName=mainItem}">
 
       <!--Panorama item one-->
       <phone:PanoramaItem x:Name="menuItem" Header="Меню">
@@ -31,8 +32,7 @@
       <!--Panorama item two-->
       <phone:PanoramaItem x:Name="mainItem" Header="Главная">
         <Grid>
-          <ProgressBar IsIndeterminate="True" Visibility="{Binding IsBackgroundProccessRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
-          <view:MainPostsControl Visibility="{Binding IsBackgroundProccessRunning, Converter={StaticResource OppositeBoolToVisibilityConverter}}" />
+          <view:PostsControl PostsDataSource="{Binding GeneralPosts}" />
         </Grid>
       </phone:PanoramaItem>
 

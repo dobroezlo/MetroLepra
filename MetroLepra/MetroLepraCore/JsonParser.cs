@@ -43,7 +43,10 @@ namespace MetroLepra.Core
             {
                 var jToken = postJObject.First;
 
-                var postBody = HttpUtility.HtmlDecode(jToken["body"].Value<String>());
+                var postBody = jToken["body"].Value<String>();
+                postBody = postBody.Replace("&#150;", "&#45;");
+
+                postBody = HttpUtility.HtmlDecode(postBody);
 
                 var imageRegex = "img src=\"(.+?)\"";
                 var imageMatches = Regex.Matches(postBody, imageRegex);
@@ -52,7 +55,8 @@ namespace MetroLepra.Core
                 foreach (Match match in imageMatches)
                 {
                     if (String.IsNullOrEmpty(headerImage))
-                        headerImage = "http://src.sencha.io/80/80/" + match.Groups[1].Value;
+                        headerImage = "http://src.sencha.io/320/" + match.Groups[1].Value;
+                        //headerImage = match.Groups[1].Value;
 
                     //TODO: Optimize for screen below 720p
                     //postBody = postBody.Replace(match.Groups[1].Value, "http://src.sencha.io/" + 1280 + "/" + match.Groups[1].Value);
@@ -60,7 +64,7 @@ namespace MetroLepra.Core
 
                 var doc = new HtmlDocument();
                 doc.LoadHtml(postBody);
-                var text = Regex.Replace(postBody, "(<([^>]+)>)", " ");
+                var text = Regex.Replace(postBody, "(<([^>]+)>)", "");
                 if (text.Length > 140)
                 {
                     text = text.Substring(0, 140);
