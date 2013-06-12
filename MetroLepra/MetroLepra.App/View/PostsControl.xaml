@@ -5,7 +5,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:phone="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"
     xmlns:converters="clr-namespace:MetroLepra.App.Converters"
-    xmlns:ViewModel="clr-namespace:MetroLepra.App.ViewModel" mc:Ignorable="d"
+    xmlns:ViewModel="clr-namespace:MetroLepra.App.ViewModel" xmlns:Controls="clr-namespace:MetroLepra.App.Controls"
+             mc:Ignorable="d"
     FontFamily="{StaticResource PhoneFontFamilyNormal}"
     FontSize="{StaticResource PhoneFontSizeNormal}"
     Foreground="{StaticResource PhoneForegroundBrush}"
@@ -79,6 +80,12 @@
               <Binding Path="Time" StringFormat=" в {0}" />
             </TextBlock.Text>
           </TextBlock>
+          
+          <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Template="{StaticResource MinusSignButton}" />
+            <TextBlock Text="{Binding Rating}" Margin="10 0" />
+            <Button Template="{StaticResource PlusSignButton}" />
+          </StackPanel>
         </Grid>
       </Grid>
     </DataTemplate>

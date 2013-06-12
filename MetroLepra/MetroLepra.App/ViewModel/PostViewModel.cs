@@ -14,7 +14,7 @@ namespace MetroLepra.App.ViewModel
     {
         private readonly PostModel _model;
         private WriteableBitmap _headerImage;
-        private bool _isBackgroundProccessRunning;
+        private bool _isBackgroundProccessRunning = true;
 
         public PostViewModel(PostModel postModel)
         {
@@ -86,6 +86,19 @@ namespace MetroLepra.App.ViewModel
             }
         }
 
+        public String Rating
+        {
+            get { return _model.Rating; }
+            set
+            {
+                if (value == _model.Rating)
+                    return;
+
+                _model.Rating = value;
+                RaisePropertyChanged(() => Rating);
+            }
+        }
+
         public String HeaderImageUrl
         {
             get { return _model.HeaderImageUrl; }
@@ -127,15 +140,15 @@ namespace MetroLepra.App.ViewModel
             }
         }
 
-
         public async Task DownloadHeaderImage()
         {
             if (String.IsNullOrEmpty(HeaderImageUrl))
                 return;
 
-            IsBackgroundProccessRunning = true;
             var imageStream = await ConnectionAgent.Current.GetImageStream(HeaderImageUrl);
-            HeaderImage = PictureDecoder.DecodeJpeg(imageStream);
+            if (imageStream != null)
+                HeaderImage = PictureDecoder.DecodeJpeg(imageStream);
+
             IsBackgroundProccessRunning = false;
         }
     }

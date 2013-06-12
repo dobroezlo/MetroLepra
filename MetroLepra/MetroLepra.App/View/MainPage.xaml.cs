@@ -28,8 +28,6 @@ namespace MetroLepra.App.View
             base.OnNavigatedTo(e);
 
             NavigationService.RemoveBackEntry();
-
-            SimpleIoc.Default.GetInstance<MainViewModel>().LoadGeneralPosts();            
         }
     }
 }

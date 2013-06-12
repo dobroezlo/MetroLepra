@@ -37,10 +37,11 @@ namespace MetroLepra.App.View
             control.PostsDataSourceChanged();
         }
 
-        private void PostsDataSourceChanged()
+        private async void PostsDataSourceChanged()
         {
-            if (PostsDataSource != null)
-                IsDataSourceLoading = false;
+            if (PostsDataSource == null) return;
+
+            IsDataSourceLoading = false;
         }
     }
 }

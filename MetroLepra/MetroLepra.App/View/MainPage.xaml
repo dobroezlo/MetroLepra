@@ -6,8 +6,10 @@
     xmlns:shell="clr-namespace:Microsoft.Phone.Shell;assembly=Microsoft.Phone"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+xmlns:cmd="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Extras.WP8"
     xmlns:view="clr-namespace:MetroLepra.App.View" xmlns:converters="clr-namespace:MetroLepra.App.Converters"
-    mc:Ignorable="d" 
+    xmlns:Helpers="clr-namespace:MetroLepra.App.Helpers" mc:Ignorable="d" 
     FontFamily="{StaticResource PhoneFontFamilyNormal}"
     FontSize="{StaticResource PhoneFontSizeNormal}"
     Foreground="{StaticResource PhoneForegroundBrush}"
@@ -21,9 +23,12 @@
 
   <!--LayoutRoot contains the root grid where all other page content is placed-->
   <Grid x:Name="LayoutRoot">
-    <phone:Panorama Title="{Binding LocalizedResources.ApplicationTitle, Mode=OneWay, Source={StaticResource LocalizedStrings}}" 
-                    DefaultItem="{Binding ElementName=mainItem}">
-
+    <phone:Panorama x:Name="Panorama" Title="{Binding LocalizedResources.ApplicationTitle, Mode=OneWay, Source={StaticResource LocalizedStrings}}" 
+                    DefaultItem="{Binding ElementName=mainItem}" >
+      <i:Interaction.Behaviors>
+        <Helpers:TrackablePanoramaBehavior SelectedItem="{Binding SelectedPanoramaItem, Mode=TwoWay}" />   
+      </i:Interaction.Behaviors>
+      
       <!--Panorama item one-->
       <phone:PanoramaItem x:Name="menuItem" Header="Меню">
         <Grid/>
@@ -37,11 +42,15 @@
       </phone:PanoramaItem>
 
       <phone:PanoramaItem x:Name="myStuffItem" Header="Мои Вещи">
-        <Grid/>
+        <Grid>
+          <view:PostsControl PostsDataSource="{Binding MyStuffPosts}" />
+        </Grid>
       </phone:PanoramaItem>
 
       <phone:PanoramaItem x:Name="inboxItem" Header="Инбокс">
-        <Grid/>
+        <Grid>
+          <view:PostsControl PostsDataSource="{Binding InboxPosts}" />
+        </Grid>
       </phone:PanoramaItem>
     </phone:Panorama>
   </Grid>

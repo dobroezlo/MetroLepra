@@ -17,7 +17,7 @@ namespace MetroLepra.App.ViewModel
             if (String.IsNullOrEmpty(postHeaderViewModel.HeaderText))
                 return ImageHeaderTemplate;
 
-            if (String.IsNullOrEmpty(postHeaderViewModel.HeaderImageUrl))
+            if (postHeaderViewModel.HeaderImage == null)
                 return TextHeaderTemplate;
 
             return ImageAndTextHeaderTemplate;
