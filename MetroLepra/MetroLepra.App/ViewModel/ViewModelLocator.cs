@@ -26,6 +26,10 @@ namespace MetroLepra.App.ViewModel
     /// </summary>
     public class ViewModelLocator
     {
+        public static readonly Uri MainPageUri = new Uri("/View/MainPage.xaml", UriKind.Relative);
+        public static Uri LoginPageUri = new Uri("/View/LoginPage.xaml", UriKind.Relative);
+        public static Uri PostPageUri = new Uri("/View/PostPage.xaml", UriKind.Relative);
+
         /// <summary>
         ///     Initializes a new instance of the ViewModelLocator class.
         /// </summary>
@@ -33,19 +37,9 @@ namespace MetroLepra.App.ViewModel
         {
             ServiceLocator.SetLocatorProvider(() => SimpleIoc.Default);
 
-            ////if (ViewModelBase.IsInDesignModeStatic)
-            ////{
-            ////    // Create design time view services and models
-            ////    SimpleIoc.Default.Register<IDataService, DesignDataService>();
-            ////}
-            ////else
-            ////{
-            ////    // Create run time view services and models
-            ////    SimpleIoc.Default.Register<IDataService, DataService>();
-            ////}
-
             SimpleIoc.Default.Register<MainViewModel>();
             SimpleIoc.Default.Register<LoginViewModel>();
+            SimpleIoc.Default.Register<PostViewModel>();
             SimpleIoc.Default.Register<INavigationService, NavigationService>();
         }
 
@@ -54,14 +48,15 @@ namespace MetroLepra.App.ViewModel
             get { return ServiceLocator.Current.GetInstance<MainViewModel>(); }
         }
 
-        public static readonly Uri MainPageUri = new Uri("/View/MainPage.xaml", UriKind.Relative);
-
         public LoginViewModel Login
         {
             get { return ServiceLocator.Current.GetInstance<LoginViewModel>(); }
         }
 
-        public static Uri LoginPageUri = new Uri("/View/LoginPage.xaml", UriKind.Relative);
+        public PostViewModel Post
+        {
+            get { return ServiceLocator.Current.GetInstance<PostViewModel>(); }
+        }
 
         public static void Cleanup()
         {

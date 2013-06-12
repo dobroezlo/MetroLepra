@@ -1,9 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Ioc;
 using MetroLepra.Core;
 using MetroLepra.Model;
 using Microsoft.Phone;
@@ -12,102 +14,107 @@ namespace MetroLepra.App.ViewModel
 {
     public class PostViewModel : ViewModelBase
     {
-        private readonly PostModel _model;
+        private ObservableCollection<UIElement> _bodyXaml;
         private WriteableBitmap _headerImage;
-        private bool _isBackgroundProccessRunning = true;
+        private bool _isBackgroundProccessRunning;
+
+        [PreferredConstructor]
+        public PostViewModel()
+        {
+        }
 
         public PostViewModel(PostModel postModel)
         {
-            _model = postModel;
+            Model = postModel;
         }
 
         public String Author
         {
-            get { return _model.Author.Username; }
+            get { return Model.Author.Username; }
             set
             {
-                if (value == _model.Author.Username)
+                if (value == Model.Author.Username)
                     return;
 
-                _model.Author.Username = value;
+                Model.Author.Username = value;
                 RaisePropertyChanged(() => Author);
             }
         }
 
         public String HeaderText
         {
-            get { return _model.HeaderText; }
+            get { return Model.HeaderText; }
             set
             {
-                if (value == _model.HeaderText)
+                if (value == Model.HeaderText)
                     return;
 
-                _model.HeaderText = value;
+                Model.HeaderText = value;
                 RaisePropertyChanged(() => HeaderText);
             }
         }
 
         public String Date
         {
-            get { return _model.Date; }
+            get { return Model.Date; }
             set
             {
-                if (value == _model.Date)
+                if (value == Model.Date)
                     return;
 
-                _model.Date = value;
+                Model.Date = value;
                 RaisePropertyChanged(() => Date);
             }
         }
 
         public String Time
         {
-            get { return _model.Time; }
+            get { return Model.Time; }
             set
             {
-                if (value == _model.Time)
+                if (value == Model.Time)
                     return;
 
-                _model.Time = value;
+                Model.Time = value;
                 RaisePropertyChanged(() => Time);
             }
         }
 
         public String Body
         {
-            get { return _model.Body; }
+            get { return Model.Body; }
             set
             {
-                if (value == _model.Body)
+                if (value == Model.Body)
                     return;
 
-                _model.Body = value;
+                Model.Body = value;
                 RaisePropertyChanged(() => Body);
             }
         }
 
         public String Rating
         {
-            get { return _model.Rating; }
+            get { return Model.Rating; }
             set
             {
-                if (value == _model.Rating)
+                if (value == Model.Rating)
                     return;
 
-                _model.Rating = value;
+                Model.Rating = value;
                 RaisePropertyChanged(() => Rating);
             }
         }
 
         public String HeaderImageUrl
         {
-            get { return _model.HeaderImageUrl; }
+            get { return Model.HeaderImageUrl; }
             set
             {
-                if (value == _model.HeaderImageUrl)
+                if (value == Model.HeaderImageUrl)
                     return;
 
-                _model.HeaderImageUrl = value;
+                Model.HeaderImageUrl = value;
                 RaisePropertyChanged(() => HeaderImageUrl);
             }
         }
@@ -125,7 +132,18 @@ namespace MetroLepra.App.ViewModel
             }
         }
 
-        public List<UIElement> BodyXaml { get; set; }
+        public ObservableCollection<UIElement> BodyXaml
+        {
+            get { return _bodyXaml; }
+            set
+            {
+                if (value == _bodyXaml)
+                    return;
+
+                _bodyXaml = value;
+                RaisePropertyChanged(() => BodyXaml);
+            }
+        }
 
         public bool IsBackgroundProccessRunning
         {
@@ -140,14 +158,39 @@ namespace MetroLepra.App.ViewModel
             }
         }
 
+        public PostModel Model { get; set; }
+
         public async Task DownloadHeaderImage()
         {
             if (String.IsNullOrEmpty(HeaderImageUrl))
                 return;
 
+            IsBackgroundProccessRunning = true;
+
             var imageStream = await ConnectionAgent.Current.GetImageStream(HeaderImageUrl);
             if (imageStream != null)
                 HeaderImage = PictureDecoder.DecodeJpeg(imageStream);
+
+            IsBackgroundProccessRunning = false;
+        }
+
+        public async Task CreateBodyXaml()
+        {
+            if (String.IsNullOrEmpty(Body))
+                return;
+
+            IsBackgroundProccessRunning = true;
+
+            if(BodyXaml != null)
+                BodyXaml.Clear();
+            else
+                BodyXaml = new ObservableCollection<UIElement>();
+
+            var elements = await HtmlParser.ConvertHtmlToXaml(Body);
+            foreach (var element in elements)
+            {
+                BodyXaml.Add(element);
+            }
 
             IsBackgroundProccessRunning = false;
         }

@@ -1,7 +1,10 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Command;
+using GalaSoft.MvvmLight.Ioc;
 using MetroLepra.App.Interfaces;
 using MetroLepra.Core;
 using Microsoft.Phone.Controls;
@@ -19,12 +22,16 @@ namespace MetroLepra.App.ViewModel
         private PanoramaItem _selectedPanoramaItem;
 
         /// <summary>
-        ///   Initializes a new instance of the MainViewModel class.
+        ///     Initializes a new instance of the MainViewModel class.
         /// </summary>
         public MainViewModel(INavigationService navigationService)
         {
             _navigationService = navigationService;
+
+            PostTappedCommand = new RelayCommand<PostViewModel>(OnPostTapped);
         }
+
+        public RelayCommand<PostViewModel> PostTappedCommand { get; set; }
 
         public ObservableCollection<PostViewModel> GeneralPosts
         {
@@ -79,6 +86,14 @@ namespace MetroLepra.App.ViewModel
             }
         }
 
+        private void OnPostTapped(PostViewModel post)
+        {
+            var currentPost = SimpleIoc.Default.GetInstance<PostViewModel>();
+            currentPost.Model = post.Model;
+
+            _navigationService.NavigateTo(ViewModelLocator.PostPageUri);
+        }
+
         private void OnSelectedPanoramaItemChanged()
         {
             if (SelectedPanoramaItem.Name == "mainItem")
@@ -86,7 +101,7 @@ namespace MetroLepra.App.ViewModel
                 LoadGeneralPosts();
                 LoadMyStuffPosts();
             }
-            else if(SelectedPanoramaItem.Name == "menuItem")
+            else if (SelectedPanoramaItem.Name == "menuItem")
             {
                 LoadGeneralPosts();
                 LoadInboxPosts();
@@ -110,7 +125,7 @@ namespace MetroLepra.App.ViewModel
                 return;
             }
 
-            if(GeneralPosts != null)
+            if (GeneralPosts != null)
                 GeneralPosts.Clear();
 
             foreach (var postViewModel in latestPostsViewModel)
@@ -119,7 +134,7 @@ namespace MetroLepra.App.ViewModel
 
                 if (GeneralPosts == null)
                     GeneralPosts = new ObservableCollection<PostViewModel>();
-                
+
                 GeneralPosts.Add(postViewModel);
             }
         }
@@ -129,13 +144,13 @@ namespace MetroLepra.App.ViewModel
             var myStuff = await ConnectionAgent.Current.GetMyStuff();
 
             var latestPostsViewModel = myStuff.Select(x => new PostViewModel(x)).ToList();
-            if(latestPostsViewModel.Count == 0)
+            if (latestPostsViewModel.Count == 0)
             {
                 MyStuffPosts = new ObservableCollection<PostViewModel>();
                 return;
             }
 
-            if(MyStuffPosts != null)
+            if (MyStuffPosts != null)
                 MyStuffPosts.Clear();
 
             foreach (var postViewModel in latestPostsViewModel)
@@ -159,7 +174,7 @@ namespace MetroLepra.App.ViewModel
                 return;
             }
 
-            if(InboxPosts != null)
+            if (InboxPosts != null)
                 InboxPosts.Clear();
 
             foreach (var postViewModel in inboxPostsViewModel)

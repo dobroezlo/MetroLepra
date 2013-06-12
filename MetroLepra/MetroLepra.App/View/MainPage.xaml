@@ -6,10 +6,10 @@
     xmlns:shell="clr-namespace:Microsoft.Phone.Shell;assembly=Microsoft.Phone"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
-xmlns:cmd="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Extras.WP8"
-    xmlns:view="clr-namespace:MetroLepra.App.View" xmlns:converters="clr-namespace:MetroLepra.App.Converters"
-    xmlns:Helpers="clr-namespace:MetroLepra.App.Helpers" mc:Ignorable="d" 
+    xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+    xmlns:converters="clr-namespace:MetroLepra.App.Converters"
+    xmlns:Helpers="clr-namespace:MetroLepra.App.Helpers" xmlns:controls="clr-namespace:MetroLepra.App.Controls"
+    mc:Ignorable="d" 
     FontFamily="{StaticResource PhoneFontFamilyNormal}"
     FontSize="{StaticResource PhoneFontSizeNormal}"
     Foreground="{StaticResource PhoneForegroundBrush}"
@@ -37,19 +37,19 @@ xmlns:cmd="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.
       <!--Panorama item two-->
       <phone:PanoramaItem x:Name="mainItem" Header="Главная">
         <Grid>
-          <view:PostsControl PostsDataSource="{Binding GeneralPosts}" />
+          <controls:PostsListControl PostsDataSource="{Binding GeneralPosts}" />
         </Grid>
       </phone:PanoramaItem>
 
       <phone:PanoramaItem x:Name="myStuffItem" Header="Мои Вещи">
         <Grid>
-          <view:PostsControl PostsDataSource="{Binding MyStuffPosts}" />
+          <controls:PostsListControl PostsDataSource="{Binding MyStuffPosts}" />
         </Grid>
       </phone:PanoramaItem>
 
       <phone:PanoramaItem x:Name="inboxItem" Header="Инбокс">
         <Grid>
-          <view:PostsControl PostsDataSource="{Binding InboxPosts}" />
+          <controls:PostsListControl PostsDataSource="{Binding InboxPosts}" />
         </Grid>
       </phone:PanoramaItem>
     </phone:Panorama>

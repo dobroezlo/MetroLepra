@@ -1,11 +1,14 @@
-﻿<UserControl x:Class="MetroLepra.App.View.PostsControl"
+﻿<UserControl x:Class="MetroLepra.App.Controls.PostsListControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:phone="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"
     xmlns:converters="clr-namespace:MetroLepra.App.Converters"
-    xmlns:ViewModel="clr-namespace:MetroLepra.App.ViewModel" xmlns:Controls="clr-namespace:MetroLepra.App.Controls"
+    xmlns:ViewModel="clr-namespace:MetroLepra.App.ViewModel"
+    xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"             
+    xmlns:cmd="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Extras.WP8"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d"
     FontFamily="{StaticResource PhoneFontFamilyNormal}"
     FontSize="{StaticResource PhoneFontSizeNormal}"
@@ -87,6 +90,12 @@
             <Button Template="{StaticResource PlusSignButton}" />
           </StackPanel>
         </Grid>
+        
+        <i:Interaction.Triggers>
+          <i:EventTrigger EventName="Tap">
+            <cmd:EventToCommand Command="{Binding ElementName=Control, Path=DataContext.PostTappedCommand}" CommandParameter="{Binding}" />
+          </i:EventTrigger>
+        </i:Interaction.Triggers>
       </Grid>
     </DataTemplate>
 

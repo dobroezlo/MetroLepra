@@ -8,6 +8,7 @@ using MetroLepra.Model;
 using Microsoft.Phone.Controls;
 using Microsoft.Phone.Shell;
 using MetroLepra.App.Resources;
+using Telerik.Windows.Controls;
 
 namespace MetroLepra.App
 {
@@ -117,7 +118,7 @@ namespace MetroLepra.App
 
             // Create the frame but don't set it as RootVisual yet; this allows the splash
             // screen to remain active until the application is ready to render.
-            RootFrame = new PhoneApplicationFrame();
+            RootFrame = new RadPhoneApplicationFrame();
             RootFrame.Navigated += CompleteInitializePhoneApplication;
 
             // Handle navigation failures
